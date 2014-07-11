@@ -1,29 +1,4 @@
 #!/bin/bash
 
-package=coreutils
-version=8.22
-file=$package-$version.tar.xz
-url=http://ftp.gnu.org/gnu/$package/$file
-config=()
-
-### main #############################################################
-
-srcdir=$HOME/sources/thirdparty
-builddir=$HOME/build/thirdparty
-installdir=$HOME/local/stow
-
-mkdir -p $srcdir
-mkdir -p $builddir/$package-$version
-mkdir -p $installdir/$package-$version
-
-cd $srcdir
-wget $url
-tar Jxf $file
-
-cd $builddir/$package-$version
-$srcdir/$package-$version/configure ${config[@]} --prefix $installdir/$package-$version
-make
-make install
-
-cd $installdir
-stow $package-$version
+baseurl=http://ftp.gnu.org/gnu/coreutils
+extension=tar.xz
