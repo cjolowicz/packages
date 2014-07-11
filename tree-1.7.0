@@ -2,7 +2,7 @@
 
 baseurl=ftp://mama.indstate.edu/linux/tree
 extension=tgz
-configure_type=autoconf
+configure_type=noop
 make_vars=(prefix=$pkginstalldir)
 
 . $(dirname $0)/lib/main.sh
