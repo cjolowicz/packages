@@ -1,35 +1,6 @@
-#!/bin/bash -ex
+#!/bin/bash
 
-package=bison
-version=3.0.2
-file=$package-$version.tar.gz
-url=http://ftp.gnu.org/gnu/$package/$file
-config=()
+baseurl=http://ftp.gnu.org/gnu/bison
 dependencies=(m4-1.4.17)
 
-### main #############################################################
-
-srcdir=$HOME/sources/thirdparty
-builddir=$HOME/build/thirdparty
-installdir=$HOME/local/stow
-
-mkdir -p $srcdir
-mkdir -p $builddir/$package-$version
-mkdir -p $installdir/$package-$version
-
-for dependency in ${dependencies[@]} ; do
-    $srcdir/$dependency
-done
-
-cd $srcdir
-wget -O $file $url
-tar zxf $file
-
-cd $builddir/$package-$version
-$srcdir/$package-$version/configure ${config[@]} --prefix $installdir/$package-$version
-make
-make install
-
-cd $installdir
-rm -f $HOME/local/share/info/dir
-stow $package-$version
+. $(dirname $0)/lib/main.sh
