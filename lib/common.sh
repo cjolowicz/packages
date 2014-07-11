@@ -5,10 +5,13 @@
 : ${url:=$baseurl/$file}
 
 [ -n "${dependencies+x}" ] || dependencies=()
-[ -n "${env+x}"		 ] || env=()
-[ -n "${config+x}"	 ] || config=()
-[ -n "${vars+x}"	 ] || make_vars=()
-[ -n "${wget_opts+x}"	 ] || wget_opts=()
+[ -n "${cflags+x}"       ] || cflags=()
+[ -n "${cppflags+x}"     ] || cppflags=()
+[ -n "${cxxflags+x}"     ] || cxxflags=()
+[ -n "${ldflags+x}"      ] || ldflags=()
+[ -n "${config+x}"       ] || config=()
+[ -n "${vars+x}"         ] || make_vars=()
+[ -n "${wget_opts+x}"    ] || wget_opts=()
 
 : ${configure_type:=autoconf}
 
@@ -27,9 +30,14 @@ pkgbuilddir=$builddir/$package-$version
 pkginstalldir=$installdir/$package-$version
 
 config+=(--prefix $pkginstalldir)
-
-env+=(
-    CPPFLAGS=-I$includedir
-    LDFLAGS="-L$libdir -Wl,-rpath=$libdir")
+cppflags+=(-I$includedir)
+ldflags+=(-L$libdir -Wl,-rpath=$libdir)
 
 commands=()
+env=()
+
+[ ${#cppflags[@]} -eq 0 ] || env+=("CPPFLAGS=${cppflags[*]}")
+[ ${#cflags[@]}   -eq 0 ] || env+=("CFLAGS=${cflags[*]}")
+[ ${#cxxflags[@]} -eq 0 ] || env+=("CXXFLAGS=${cxxflags[*]}")
+[ ${#ldflags[@]}  -eq 0 ] || env+=("LDFLAGS=${ldflags[*]}")
+
