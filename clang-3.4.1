@@ -1,0 +1,122 @@
+#!/bin/bash -ex
+
+packagedir=$HOME/sources/packages
+srcdir=$HOME/sources/thirdparty
+builddir=$HOME/build/thirdparty
+prefix=$HOME/local
+installdir=$prefix/stow
+includedir=$prefix/include
+
+### config ###########################################################
+
+package=cfe
+version=3.4.1
+file=$package-$version.src.tar.gz
+url=http://llvm.org/releases/$version/$file
+dependencies=(llvm-3.4.1 libedit-20140213-3.1)
+
+package_extra=clang-tools-extra
+version_extra=3.4
+file_extra=$package_extra-$version_extra.src.tar.gz
+url_extra=http://llvm.org/releases/$version_extra/$file_extra
+
+config=(
+    -DCMAKE_PREFIX_PATH=$prefix
+    -DCMAKE_INSTALL_PREFIX=$installdir/$package-$version
+    -DCMAKE_BUILD_TYPE=Debug
+    -DCLANG_PATH_TO_LLVM_BUILD=$builddir/llvm-$version
+    -DCLANG_PATH_TO_LLVM_SOURCE=$srcdir/llvm-$version.src
+    -DLLVM_EXTERNAL_CLANG_TOOLS_EXTRA_SOURCE_DIR=$srcdir/$package_extra-$version_extra
+    )
+
+### functions ########################################################
+
+do_deps() {
+    mkdir -p $packagedir
+
+    for dependency in ${dependencies[@]} ; do
+        $packagedir/$dependency
+    done
+}
+
+do_source() {
+    mkdir -p $srcdir
+
+    cd $srcdir
+
+    wget -O $file $url
+    tar zxf $file
+
+    wget -O $file_extra $url_extra
+    tar zxf $file_extra
+
+    patch -p2 -d $package_extra-$version_extra <<EOF
+--- clang-tools-extra/trunk/CMakeLists.txt (original)
++++ clang-tools-extra/trunk/CMakeLists.txt Sun Jan 19 02:54:11 2014
+@@ -1,3 +1,16 @@
+-check_library_exists(edit el_init "" HAVE_LIBEDIT)
++include(CheckLibraryExists)
++
++find_library(LIBEDIT_LIBRARY_FILE edit)
++if(LIBEDIT_LIBRARY_FILE)
++    get_filename_component(LIBEDIT_LIBRARY_DIRECTORY "\${LIBEDIT_LIBRARY_FILE}" PATH)
++    check_library_exists(edit el_init "\${LIBEDIT_LIBRARY_DIRECTORY}" HAVE_LIBEDIT)
++    link_directories("\${LIBEDIT_LIBRARY_DIRECTORY}")
++endif()
++
++find_file(LIBEDIT_INCLUDE_FILE histedit.h)
++if(LIBEDIT_INCLUDE_FILE)
++    get_filename_component(LIBEDIT_INCLUDE_DIRECTORY "\${LIBEDIT_INCLUDE_FILE}" PATH)
++    include_directories("\${LIBEDIT_INCLUDE_DIRECTORY}")
++endif()
+ 
+ add_subdirectory(clang-apply-replacements)
+EOF
+}
+
+do_configure() {
+    [ -d $srcdir/$package-$version.src ] || do_source
+
+    mkdir -p $builddir/$package-$version
+
+    cd $builddir/$package-$version
+    cmake $srcdir/$package-$version.src ${config[@]}
+}
+
+do_build() {
+    [ -f $builddir/$package-$version/Makefile ] || do_configure
+
+    cd $builddir/$package-$version
+    make
+}
+
+do_stage() {
+    [ -f $builddir/$package-$version/Makefile ] || do_build
+
+    mkdir -p $installdir
+
+    cd $builddir/$package-$version
+    make install
+}
+
+do_install() {
+    [ -d $installdir/$package-$version ] || do_stage
+
+    cd $installdir
+    stow $package-$version
+}
+
+### main #############################################################
+
+[ $# -gt 0 ] || set -- install
+
+for arg ; do
+    case $arg in
+        'deps')      do_deps      ;;
+        'source')    do_source    ;;
+        'configure') do_configure ;;
+        'build')     do_build     ;;
+        'stage')     do_stage     ;;
+        'install')   do_install   ;;
+    esac
+done

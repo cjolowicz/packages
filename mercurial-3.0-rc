@@ -1,0 +1,27 @@
+#!/bin/bash
+
+package=mercurial
+version=3.0-rc
+file=$package-$version.tar.gz
+url=http://mercurial.selenic.com/release/$file
+config=()
+
+### main #############################################################
+
+srcdir=$HOME/sources/thirdparty
+builddir=$srcdir
+installdir=$HOME/local/stow
+
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir/$package-$version
+
+cd $srcdir
+wget $url
+tar zxf $file
+
+cd $builddir/$package-$version
+make install PREFIX=$installdir/$package-$version
+
+cd $installdir
+stow $package-$version

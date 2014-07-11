@@ -1,0 +1,8 @@
+#!/bin/bash
+
+baseurl=ftp://mama.indstate.edu/linux/tree
+extension=tgz
+configure_type=autoconf
+make_vars=(prefix=$pkginstalldir)
+
+. $(dirname $0)/lib/main.sh

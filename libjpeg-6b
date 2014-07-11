@@ -1,0 +1,41 @@
+#!/bin/bash -ex
+
+package=libjpeg
+version=6b
+srcname=jpeg-$version
+file=jpegsrc.v$version.tar.gz
+url=http://sourceforge.net/projects/$package/files/$package/$version/$file/download
+config=()
+dependencies=()
+
+### main #############################################################
+
+packagedir=$HOME/sources/packages
+srcdir=$HOME/sources/thirdparty
+builddir=$HOME/build/thirdparty
+installdir=$HOME/local/stow
+
+mkdir -p $packagedir
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir/$package-$version/bin
+mkdir -p $installdir/$package-$version/lib
+mkdir -p $installdir/$package-$version/include
+mkdir -p $installdir/$package-$version/man/man1
+
+for dependency in ${dependencies[@]} ; do
+    $packagedir/$dependency
+done
+
+cd $srcdir
+wget -O $file $url
+tar zxf $file
+
+cd $builddir/$package-$version
+$srcdir/$srcname/configure ${config[@]} --prefix $installdir/$package-$version
+make
+make install
+make install-lib
+
+cd $installdir
+stow $package-$version

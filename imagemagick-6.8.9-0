@@ -1,0 +1,36 @@
+#!/bin/bash -ex
+
+package=ImageMagick
+version=6.8.9-0
+file=$package-$version.tar.gz
+url=http://mirror.checkdomain.de/imagemagick/$file
+config=()
+dependencies=()
+
+### main #############################################################
+
+packagedir=$HOME/sources/packages
+srcdir=$HOME/sources/thirdparty
+builddir=$HOME/build/thirdparty
+installdir=$HOME/local/stow
+
+mkdir -p $packagedir
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir/$package-$version
+
+for dependency in ${dependencies[@]} ; do
+    $packagedir/$dependency
+done
+
+cd $srcdir
+wget $url
+tar zxf $file
+
+cd $builddir/$package-$version
+$srcdir/$package-$version/configure ${config[@]} --prefix $installdir/$package-$version
+make
+make install
+
+cd $installdir
+stow $package-$version

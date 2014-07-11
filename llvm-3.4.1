@@ -1,0 +1,36 @@
+#!/bin/bash -ex
+
+package=llvm
+version=3.4.1
+file=$package-$version.src.tar.gz
+url=http://llvm.org/releases/$version/$file
+config=(-DCMAKE_BUILD_TYPE=Debug)
+dependencies=()
+
+### main #############################################################
+
+packagedir=$HOME/sources/packages
+srcdir=$HOME/sources/thirdparty
+builddir=$HOME/build/thirdparty
+installdir=$HOME/local/stow
+
+mkdir -p $packagedir
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir
+
+for dependency in ${dependencies[@]} ; do
+    $packagedir/$dependency
+done
+
+cd $srcdir
+wget -O $file $url
+tar zxf $file
+
+cd $builddir/$package-$version
+cmake $srcdir/$package-$version.src ${config[@]} -DCMAKE_INSTALL_PREFIX=$installdir/$package-$version
+make
+make install
+
+cd $installdir
+stow $package-$version

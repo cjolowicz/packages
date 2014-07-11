@@ -1,0 +1,30 @@
+#!/bin/bash
+
+package=unclutter
+version=1.09
+file=$package-$version.tar.gz
+url=http://sourceforge.net/projects/unclutter/files/$file/download
+
+### main #############################################################
+
+srcdir=$HOME/sources/thirdparty
+builddir=$srcdir
+installdir=$HOME/local/stow
+bindir=$installdir/$package-$version/bin
+mandir=$installdir/$package-$version/man/man1
+
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir/$package-$version
+mkdir -p $bindir
+mkdir -p $mandir
+
+cd $srcdir
+wget -O $file $url
+tar zxf $file
+
+cd $builddir/$package-$version
+make install install.man BINDIR=$bindir MANDIR=$mandir
+
+cd $installdir
+stow $package-$version

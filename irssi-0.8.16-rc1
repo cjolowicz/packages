@@ -1,0 +1,29 @@
+#!/bin/bash
+
+package=irssi
+version=0.8.16-rc1
+file=$package-$version.tar.gz
+url=http://www.irssi.org/files/$file
+config=()
+
+### main #############################################################
+
+srcdir=$HOME/sources/thirdparty
+builddir=$HOME/build/thirdparty
+installdir=$HOME/local/stow
+
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir/$package-$version
+
+cd $srcdir
+wget $url
+tar zxf $file
+
+cd $builddir/$package-$version
+$srcdir/$package-$version/configure ${config[@]} --prefix $installdir/$package-$version
+make
+make install
+
+cd $installdir
+stow $package-$version

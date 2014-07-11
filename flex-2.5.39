@@ -1,0 +1,30 @@
+#!/bin/bash -ex
+
+package=flex
+version=2.5.39
+file=$package-$version.tar.gz
+url=http://sourceforge.net/projects/$package/files/$file/download
+config=()
+
+### main #############################################################
+
+srcdir=$HOME/sources/thirdparty
+builddir=$HOME/build/thirdparty
+installdir=$HOME/local/stow
+
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir/$package-$version
+
+cd $srcdir
+wget -O $file $url
+tar zxf $file
+
+cd $builddir/$package-$version
+$srcdir/$package-$version/configure ${config[@]} --prefix $installdir/$package-$version
+make
+make install
+
+cd $installdir
+rm -f $HOME/local/share/info/dir
+stow $package-$version

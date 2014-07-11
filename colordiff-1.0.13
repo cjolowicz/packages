@@ -1,0 +1,29 @@
+#!/bin/bash
+
+package=colordiff
+version=1.0.13
+file=$package-$version.tar.gz
+url=http://www.colordiff.org/$file
+
+### main #############################################################
+
+srcdir=$HOME/sources/thirdparty
+builddir=$srcdir
+installdir=$HOME/local/stow
+
+mkdir -p $srcdir
+mkdir -p $builddir/$package-$version
+mkdir -p $installdir/$package-$version
+
+cd $srcdir
+wget $url
+tar zxf $file
+
+cd $builddir/$package-$version
+make install \
+    INSTALL_DIR=$installdir/$package-$version/bin \
+    MAN_DIR=$installdir/$package-$version/man/man1 \
+    ETC_DIR=$installdir/$package-$version/etc
+
+cd $installdir
+stow $package-$version
