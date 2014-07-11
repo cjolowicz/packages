@@ -1,10 +1,7 @@
 set -e
 
-prog=$(basename $0)
-progdir=$(dirname $0)
-proglibdir=$progdir/lib
+[ -n "${proglibdir+x}" ] || . $(dirname $0)/lib/common.sh
 
-. $proglibdir/common.sh
 . $proglibdir/deps.sh
 . $proglibdir/source.sh
 . $proglibdir/configure.sh

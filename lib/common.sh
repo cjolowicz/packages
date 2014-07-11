@@ -1,3 +1,7 @@
+prog=$(basename $0)
+progdir=$(dirname $0)
+proglibdir=$progdir/lib
+
 : ${package:=${prog%%-*}}
 : ${version:=${prog#*-}}
 : ${extension:=tar.gz}
