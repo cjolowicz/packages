@@ -1,6 +1,8 @@
 #!/bin/bash
 
-baseurl=http://ftp.gnu.org/gnu/bison
-dependencies=(m4-1.4.17)
-
 . $(dirname $0)/lib/main.sh
+
+baseurl=http://ftp.gnu.org/gnu/$package
+dependencies+=(m4-1.4.17)
+
+main "$@"

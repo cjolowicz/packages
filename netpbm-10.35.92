@@ -1,34 +1,23 @@
 #!/bin/bash -ex
 
-package=netpbm
-version=10.35.92
-file=$package-$version.tgz
-url=http://sourceforge.net/projects/$package/files/super_stable/$version/$file/download
-config=()
-dependencies=(libjpeg-6b libtiff-4.0.3)
+. $(dirname $0)/lib/main.sh
 
-### main #############################################################
+url=http://sourceforge.net/projects/$package/files/super_stable/$version/$package-$version.tgz
+dependencies+=(libjpeg-6b libtiff-4.0.3)
+make_vars+=(pkgdir=$pkginstalldir)
 
-packagedir=$HOME/sources/packages
-srcdir=$HOME/sources/thirdparty
-builddir=$srcdir
-installdir=$HOME/local/stow
+do_configure() {
+    [ -f $pkgsrcdir/Makefile.config.in ] || do_source
 
-mkdir -p $packagedir
-mkdir -p $srcdir
-mkdir -p $builddir/$package-$version
-mkdir -p $installdir
+    mkdir -p $builddir
 
-for dependency in ${dependencies[@]} ; do
-    $packagedir/$dependency
-done
+    cd $builddir
 
-cd $srcdir
-wget -O $file $url
-tar zxf $file
+    ln -sf $pkgsrcdir
 
-cd $builddir/$package-$version
-cat Makefile.config.in - > Makefile.config <<EOF
+    cd $pkgbuilddir
+
+    cat Makefile.config.in - > Makefile.config <<EOF
 DEFAULT_TARGET = nonmerge
 NETPBMLIBTYPE=unixshared
 NETPBMLIBSUFFIX=so
@@ -39,16 +28,24 @@ LDRELOC = ld --reloc
 LINKER_CAN_DO_EXPLICIT_LIBRARY=Y
 LINKERISCOMPILER = Y
 CFLAGS_SHLIB += -fPIC
-TIFFLIB = $HOME/local/lib/libtiff.a
-TIFFHDR_DIR = $HOME/local/include
-JPEGLIB = $HOME/local/lib/libjpeg.a
-JPEGHDR_DIR = $HOME/local/include
+TIFFLIB = $libdir/libtiff.a
+TIFFHDR_DIR = $includedir
+JPEGLIB = $libdir/libjpeg.a
+JPEGHDR_DIR = $includedir
 ZLIB = libz.so
 X11LIB = libX11.so
 NETPBM_DOCURL = http://netpbm.sourceforge.net/doc/
 EOF
-make
-make package pkgdir=$installdir/$package-$version
+}
 
-cd $installdir
-stow $package-$version
+do_stage() {
+    [ -f $pkgbuilddir/Makefile ] || do_build
+
+    mkdir -p $installdir
+
+    cd $pkgbuilddir
+
+    make package "${env[@]}" "${make_vars[@]}"
+}
+
+main "$@"

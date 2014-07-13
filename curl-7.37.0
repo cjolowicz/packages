@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. $(dirname $0)/lib/main.sh
+
 baseurl=http://curl.haxx.se/download
 
-. $(dirname $0)/lib/main.sh
+main "$@"

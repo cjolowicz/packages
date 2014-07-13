@@ -1,6 +1,8 @@
 #!/bin/bash
 
-baseurl=http://www.graphviz.org/pub/graphviz/stable/SOURCES
+. $(dirname $0)/lib/main.sh
+
+baseurl=http://www.graphviz.org/pub/$package/stable/SOURCES
 configure_type=autoconf-intree
 
-. $(dirname $0)/lib/main.sh
+main "$@"

@@ -1,8 +1,9 @@
 #!/bin/bash
 
-baseurl=ftp://mama.indstate.edu/linux/tree
-extension=tgz
-configure_type=noop
-make_vars=(prefix=$pkginstalldir)
-
 . $(dirname $0)/lib/main.sh
+
+url=ftp://mama.indstate.edu/linux/$package/$package-$version.tgz
+configure_type=noop
+make_vars+=(prefix=$pkginstalldir)
+
+main "$@"

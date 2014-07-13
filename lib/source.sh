@@ -1,22 +1,29 @@
-_extract_tar_gz() {
-    tar zxf "$1"
+_extract_archive() {
+    for file ; do
+        case $file in
+            *.tgz)     tar zxf "$file" ;;
+            *.tar.gz)  tar zxf "$file" ;;
+            *.tar.bz2) tar jxf "$file" ;;
+            *.tar.xz)  tar Jxf "$file" ;;
+        esac
+    done
 }
 
-_extract_tar_bz2() {
-    tar jxf "$1"
+_list_archive() {
+    for file ; do
+        case $file in
+            *.tgz)     tar ztf "$file" ;;
+            *.tar.gz)  tar ztf "$file" ;;
+            *.tar.bz2) tar jtf "$file" ;;
+            *.tar.xz)  tar Jtf "$file" ;;
+        esac
+    done
 }
 
-_extract_tar_xz() {
-    tar Jxf "$1"
-}
-
-_extract() {
-    case $1 in
-        *.tgz)     _extract_tar_gz  "$1" ;;
-        *.tar.gz)  _extract_tar_gz  "$1" ;;
-        *.tar.bz2) _extract_tar_bz2 "$1" ;;
-        *.tar.xz)  _extract_tar_xz  "$1" ;;
-    esac
+_get_archive_dir() {
+    for file ; do
+        _list_archive "$file" | head -n1 | cut -d/ -f1
+    done
 }
 
 do_source() {
@@ -24,7 +31,12 @@ do_source() {
 
     wget "${wget_opts[@]}" -O $file $url
 
-    _extract $file
+    _extract_archive $file
+
+    dir=$(_get_archive_dir $file)
+
+    [ "$dir" = $package-$version ] ||
+        ln -s "$dir" $package-$version
 }
 
 commands+=(source)

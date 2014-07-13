@@ -1,30 +1,23 @@
 #!/bin/bash
 
-package=unclutter
-version=1.09
-file=$package-$version.tar.gz
-url=http://sourceforge.net/projects/unclutter/files/$file/download
+. $(dirname $0)/lib/main.sh
 
-### main #############################################################
+url=http://sourceforge.net/projects/$package/files/$package-$version.tar.gz
+configure_type=noop
+make_vars+(
+    BINDIR=$pkginstalldir/bin
+    MANDIR=$pkginstalldir/man/man1)
 
-srcdir=$HOME/sources/thirdparty
-builddir=$srcdir
-installdir=$HOME/local/stow
-bindir=$installdir/$package-$version/bin
-mandir=$installdir/$package-$version/man/man1
+do_stage() {
+    [ -f $pkgbuilddir/Makefile ] || do_build
 
-mkdir -p $srcdir
-mkdir -p $builddir/$package-$version
-mkdir -p $installdir/$package-$version
-mkdir -p $bindir
-mkdir -p $mandir
+    mkdir -p $installdir
+    mkdir -p $installdir/bin
+    mkdir -p $installdir/man/man1
 
-cd $srcdir
-wget -O $file $url
-tar zxf $file
+    cd $pkgbuilddir
 
-cd $builddir/$package-$version
-make install install.man BINDIR=$bindir MANDIR=$mandir
+    make install install.man "${env[@]}" "${make_vars[@]}"
+}
 
-cd $installdir
-stow $package-$version
+main "$@"

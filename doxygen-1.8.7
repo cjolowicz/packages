@@ -1,34 +1,9 @@
-#!/bin/bash -ex
+#!/bin/bash
 
-package=doxygen
-version=1.8.7
-file=$package-$version.src.tar.gz
-url=http://ftp.stack.nl/pub/users/dimitri/$file
-config=()
-dependencies=(flex-2.5.39 bison-3.0.2)
+. $(dirname $0)/lib/main.sh
 
-### main #############################################################
+url=http://ftp.stack.nl/pub/users/dimitri/$package-$version.src.tar.gz
+dependencies+=(flex-2.5.39 bison-3.0.2)
+configure_type=autoconf-intree
 
-srcdir=$HOME/sources/thirdparty
-builddir=$srcdir
-installdir=$HOME/local/stow
-
-mkdir -p $srcdir
-mkdir -p $builddir/$package-$version
-mkdir -p $installdir/$package-$version
-
-for dependency in ${dependencies[@]} ; do
-    $srcdir/$dependency
-done
-
-cd $srcdir
-wget -O $file $url
-tar zxf $file
-
-cd $builddir/$package-$version
-$srcdir/$package-$version/configure ${config[@]} --prefix $installdir/$package-$version
-make
-make install
-
-cd $installdir
-stow $package-$version
+main "$@"

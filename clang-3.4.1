@@ -1,54 +1,31 @@
-#!/bin/bash -ex
+#!/bin/bash
 
-packagedir=$HOME/sources/packages
-srcdir=$HOME/sources/thirdparty
-builddir=$HOME/build/thirdparty
-prefix=$HOME/local
-installdir=$prefix/stow
-includedir=$prefix/include
+. $(dirname $0)/lib/main.sh
 
-### config ###########################################################
-
-package=cfe
-version=3.4.1
-file=$package-$version.src.tar.gz
-url=http://llvm.org/releases/$version/$file
-dependencies=(llvm-3.4.1 libedit-20140213-3.1)
+url=http://llvm.org/releases/$version/cfe-$version.src.tar.gz
+dependencies+=(llvm-3.4.1 libedit-20140213-3.1)
+configure_type=cmake
 
 package_extra=clang-tools-extra
 version_extra=3.4
-file_extra=$package_extra-$version_extra.src.tar.gz
+file_extra=$package_extra-$version_extra.tar.gz
 url_extra=http://llvm.org/releases/$version_extra/$file_extra
 
-config=(
+cmake_opts+=(
     -DCMAKE_PREFIX_PATH=$prefix
-    -DCMAKE_INSTALL_PREFIX=$installdir/$package-$version
+    -DCMAKE_INSTALL_PREFIX=$pkginstalldir
     -DCMAKE_BUILD_TYPE=Debug
     -DCLANG_PATH_TO_LLVM_BUILD=$builddir/llvm-$version
-    -DCLANG_PATH_TO_LLVM_SOURCE=$srcdir/llvm-$version.src
+    -DCLANG_PATH_TO_LLVM_SOURCE=$srcdir/llvm-$version
     -DLLVM_EXTERNAL_CLANG_TOOLS_EXTRA_SOURCE_DIR=$srcdir/$package_extra-$version_extra
     )
 
-### functions ########################################################
-
-do_deps() {
-    mkdir -p $packagedir
-
-    for dependency in ${dependencies[@]} ; do
-        $packagedir/$dependency
-    done
-}
-
-do_source() {
-    mkdir -p $srcdir
-
+do_source_extra() {
     cd $srcdir
 
-    wget -O $file $url
-    tar zxf $file
+    wget "${wget_opts[@]}" -O $file_extra $url_extra
 
-    wget -O $file_extra $url_extra
-    tar zxf $file_extra
+    _extract $file_extra
 
     patch -p2 -d $package_extra-$version_extra <<EOF
 --- clang-tools-extra/trunk/CMakeLists.txt (original)
@@ -74,49 +51,14 @@ do_source() {
 EOF
 }
 
-do_configure() {
-    [ -d $srcdir/$package-$version.src ] || do_source
+do_source() {
+    cd $srcdir
 
-    mkdir -p $builddir/$package-$version
+    wget "${wget_opts[@]}" -O $file $url
 
-    cd $builddir/$package-$version
-    cmake $srcdir/$package-$version.src ${config[@]}
+    _extract $file
+
+    do_source_extra
 }
 
-do_build() {
-    [ -f $builddir/$package-$version/Makefile ] || do_configure
-
-    cd $builddir/$package-$version
-    make
-}
-
-do_stage() {
-    [ -f $builddir/$package-$version/Makefile ] || do_build
-
-    mkdir -p $installdir
-
-    cd $builddir/$package-$version
-    make install
-}
-
-do_install() {
-    [ -d $installdir/$package-$version ] || do_stage
-
-    cd $installdir
-    stow $package-$version
-}
-
-### main #############################################################
-
-[ $# -gt 0 ] || set -- install
-
-for arg ; do
-    case $arg in
-        'deps')      do_deps      ;;
-        'source')    do_source    ;;
-        'configure') do_configure ;;
-        'build')     do_build     ;;
-        'stage')     do_stage     ;;
-        'install')   do_install   ;;
-    esac
-done
+main "$@"

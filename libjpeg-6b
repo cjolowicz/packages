@@ -1,41 +1,20 @@
-#!/bin/bash -ex
+#!/bin/bash
 
-package=libjpeg
-version=6b
-srcname=jpeg-$version
-file=jpegsrc.v$version.tar.gz
-url=http://sourceforge.net/projects/$package/files/$package/$version/$file/download
-config=()
-dependencies=()
+. $(dirname $0)/lib/main.sh
 
-### main #############################################################
+url=http://sourceforge.net/projects/$package/files/$package/$version/jpegsrc.v$version.tar.gz
 
-packagedir=$HOME/sources/packages
-srcdir=$HOME/sources/thirdparty
-builddir=$HOME/build/thirdparty
-installdir=$HOME/local/stow
+do_stage() {
+    [ -f $pkgbuilddir/Makefile ] || do_build
 
-mkdir -p $packagedir
-mkdir -p $srcdir
-mkdir -p $builddir/$package-$version
-mkdir -p $installdir/$package-$version/bin
-mkdir -p $installdir/$package-$version/lib
-mkdir -p $installdir/$package-$version/include
-mkdir -p $installdir/$package-$version/man/man1
+    mkdir -p $pkginstalldir/bin
+    mkdir -p $pkginstalldir/lib
+    mkdir -p $pkginstalldir/include
+    mkdir -p $pkginstalldir/man/man1
 
-for dependency in ${dependencies[@]} ; do
-    $packagedir/$dependency
-done
+    cd $pkgbuilddir
 
-cd $srcdir
-wget -O $file $url
-tar zxf $file
+    make install install-lib "${env[@]}" "${make_vars[@]}"
+}
 
-cd $builddir/$package-$version
-$srcdir/$srcname/configure ${config[@]} --prefix $installdir/$package-$version
-make
-make install
-make install-lib
-
-cd $installdir
-stow $package-$version
+main "$@"

@@ -1,16 +1,7 @@
 set -e
 
-[ -n "${proglibdir+x}" ] || . $(dirname $0)/lib/common.sh
-
-. $proglibdir/deps.sh
-. $proglibdir/source.sh
-. $proglibdir/configure.sh
-. $proglibdir/build.sh
-. $proglibdir/stage.sh
-. $proglibdir/install.sh
-. $proglibdir/unconfigure.sh
-. $proglibdir/unstage.sh
-. $proglibdir/uninstall.sh
+. $(dirname $0)/lib/config.sh
+. $(dirname $0)/lib/settings.sh
 
 _help() {
     printf '%s [' $prog
@@ -18,6 +9,20 @@ _help() {
         printf '%s|' $command
     done | sed 's/.$/]../'
     printf '\n'
+}
+
+_init() {
+    _init_settings
+
+    . $proglibdir/deps.sh
+    . $proglibdir/source.sh
+    . $proglibdir/configure.sh
+    . $proglibdir/build.sh
+    . $proglibdir/stage.sh
+    . $proglibdir/install.sh
+    . $proglibdir/unconfigure.sh
+    . $proglibdir/unstage.sh
+    . $proglibdir/uninstall.sh
 }
 
 _dispatch() {
@@ -34,8 +39,10 @@ _dispatch() {
     exit 1
 }
 
-_main() {
+main() {
     [ $# -gt 0 ] || _help
+
+    _init
 
     for arg ; do
         _dispatch $arg || status=$?
@@ -43,5 +50,3 @@ _main() {
 
     return $status
 }
-
-_main "$@"

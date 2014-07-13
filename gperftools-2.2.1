@@ -1,8 +1,10 @@
 #!/bin/bash
 
-baseurl=https://googledrive.com/host/0B6NtGsLhIcf7MWxMMF9JdTN3UVk
-dependencies=(libunwind-0.99-beta)
-wget_opts=(--no-check-certificate)
-cppflags=(-fno-omit-frame-pointer)
-
 . $(dirname $0)/lib/main.sh
+
+baseurl=https://googledrive.com/host/0B6NtGsLhIcf7MWxMMF9JdTN3UVk
+dependencies+=(libunwind-0.99-beta)
+wget_opts+=(--no-check-certificate)
+cppflags+=(-fno-omit-frame-pointer)
+
+main "$@"

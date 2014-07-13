@@ -1,13 +1,12 @@
 #!/bin/bash
 
+. $(dirname $0)/lib/main.sh
+
 baseurl=http://www.colordiff.org
 configure_type=noop
-
-. $(dirname $0)/lib/common.sh
-
 make_vars+=(
     INSTALL_DIR=$pkginstalldir/bin
     MAN_DIR=$pkginstalldir/man/man1
     ETC_DIR=$pkginstalldir/etc)
 
-. $(dirname $0)/lib/main.sh
+main "$@"

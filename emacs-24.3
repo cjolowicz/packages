@@ -1,28 +1,8 @@
 #!/bin/bash
 
-package=emacs
-version=24.3
-url=http://ftp.u-tx.net/gnu/emacs/$package-$version.tar.gz
-config=(--with-jpeg=no --with-gif=no --with-tiff=no --without-x)
+. $(dirname $0)/lib/main.sh
 
-### main #############################################################
+baseurl=http://ftp.u-tx.net/gnu/$package
+config+=(--with-jpeg=no --with-gif=no --with-tiff=no --without-x)
 
-srcdir=$HOME/sources/thirdparty
-builddir=$HOME/build/thirdparty
-installdir=$HOME/local/stow
-
-mkdir -p $srcdir
-mkdir -p $builddir/$package-$version
-mkdir -p $installdir/$package-$version
-
-cd $srcdir
-wget $url
-tar zxf $package-$version.tar.gz
-
-cd $builddir/$package-$version
-$srcdir/$package-$version/configure ${config[@]} --prefix $installdir/$package-$version
-make
-make install
-
-cd $installdir
-stow $package-$version
+main "$@"
