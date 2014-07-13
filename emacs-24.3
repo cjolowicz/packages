@@ -1,8 +1,0 @@
-#!/bin/bash
-
-. $(dirname $0)/lib/main.sh
-
-baseurl=http://ftp.u-tx.net/gnu/$package
-configure_opts+=(--with-jpeg=no --with-gif=no --with-tiff=no --without-x)
-
-main "$@"

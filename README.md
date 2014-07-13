@@ -1,4 +1,4 @@
 packages
 ========
 
-Install upstream source archives into the home directory.
+Install source archives from upstream into the home directory.

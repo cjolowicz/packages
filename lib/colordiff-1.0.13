@@ -1,0 +1,6 @@
+baseurl=http://www.colordiff.org
+configure=noop
+install_vars+=(
+    INSTALL_DIR=$pkginstalldir/bin
+    MAN_DIR=$pkginstalldir/man/man1
+    ETC_DIR=$pkginstalldir/etc)
