@@ -1,7 +1,0 @@
-#!/bin/bash
-
-. $(dirname $0)/lib/main.sh
-
-url=http://ftp.gnu.org/gnu/$package/$package-$version.tar.xz
-
-main "$@"

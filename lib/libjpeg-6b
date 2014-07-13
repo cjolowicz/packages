@@ -1,0 +1,3 @@
+url=http://sourceforge.net/projects/$package/files/$package/$version/jpegsrc.v$version.tar.gz
+install_dirs+=(bin lib include man/man1)
+install_targets+=(install-lib)

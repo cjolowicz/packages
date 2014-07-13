@@ -1,7 +1,0 @@
-#!/bin/bash
-
-. $(dirname $0)/lib/main.sh
-
-url=https://gmplib.org/download/$package/$package-${version}a.tar.bz2
-
-main "$@"

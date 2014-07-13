@@ -1,9 +1,0 @@
-#!/bin/bash
-
-. $(dirname $0)/lib/main.sh
-
-url=http://llvm.org/releases/$version/$package-$version.src.tar.gz
-cmake_opts+=(-DCMAKE_BUILD_TYPE=Debug)
-configure=cmake
-
-main "$@"

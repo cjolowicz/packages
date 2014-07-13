@@ -1,0 +1,3 @@
+url=ftp://mama.indstate.edu/linux/$package/$package-$version.tgz
+configure=noop
+install_vars+=(prefix=$pkginstalldir)

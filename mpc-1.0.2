@@ -1,8 +1,0 @@
-#!/bin/bash
-
-. $(dirname $0)/lib/main.sh
-
-baseurl=ftp://ftp.gnu.org/gnu/$package
-dependencies+=(gmp-6.0.0 mpfr-3.1.2)
-
-main "$@"

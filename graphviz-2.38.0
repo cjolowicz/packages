@@ -1,9 +1,0 @@
-#!/bin/bash
-
-. $(dirname $0)/lib/main.sh
-
-baseurl=http://www.graphviz.org/pub/$package/stable/SOURCES
-configure=autoconf
-build_in_srcdir=true
-
-main "$@"

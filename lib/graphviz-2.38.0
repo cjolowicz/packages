@@ -1,0 +1,3 @@
+baseurl=http://www.graphviz.org/pub/$package/stable/SOURCES
+configure=autoconf
+build_in_srcdir=true

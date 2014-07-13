@@ -1,0 +1,3 @@
+baseurl=http://mercurial.selenic.com/release
+configure=noop
+install_vars+=(PREFIX=$pkginstalldir)
