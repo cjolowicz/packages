@@ -3,7 +3,7 @@
 . $(dirname $0)/lib/main.sh
 
 url=ftp://mama.indstate.edu/linux/$package/$package-$version.tgz
-configure_type=noop
-make_vars+=(prefix=$pkginstalldir)
+configure=noop
+install_vars+=(prefix=$pkginstalldir)
 
 main "$@"

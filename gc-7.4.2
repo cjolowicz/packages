@@ -3,30 +3,7 @@
 . $(dirname $0)/lib/main.sh
 
 baseurl=http://hboehm.info/$package/${package}_source
-
-package_extra=libatomic_ops
-version_extra=7.4.0
-file_extra=$package_extra-$version_extra.tar.gz
-url_extra=$baseurl/$package/${package}_source/$file_extra
-
-do_source_extra() {
-    cd $srcdir
-
-    wget "${wget_opts[@]}" -O $file_extra $url_extra
-
-    _extract $file_extra
-
-    ln -s $srcdir/$package_extra-$version_extra $pkgsrcdir/$package_extra
-}
-
-do_source() {
-    cd $srcdir
-
-    wget "${wget_opts[@]}" -O $file $url
-
-    _extract $file
-
-    do_source_extra
-}
+extra_sources+=(
+    libatomic_ops=$baseurl/libatomic_ops-7.4.0.tar.gz)
 
 main "$@"

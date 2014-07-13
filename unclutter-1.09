@@ -3,21 +3,11 @@
 . $(dirname $0)/lib/main.sh
 
 url=http://sourceforge.net/projects/$package/files/$package-$version.tar.gz
-configure_type=noop
-make_vars+(
+configure=noop
+install_dirs=(bin man/man1)
+install_targets+=(install.man)
+install_vars+=(
     BINDIR=$pkginstalldir/bin
     MANDIR=$pkginstalldir/man/man1)
-
-do_stage() {
-    [ -f $pkgbuilddir/Makefile ] || do_build
-
-    mkdir -p $installdir
-    mkdir -p $installdir/bin
-    mkdir -p $installdir/man/man1
-
-    cd $pkgbuilddir
-
-    make install install.man "${env[@]}" "${make_vars[@]}"
-}
 
 main "$@"
