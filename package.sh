@@ -150,6 +150,9 @@ includedir=$prefix/include
 # The directory into which info documentation is installed.
 infodir=$prefix/share/info
 
+# The directory in which pkg-config files are located.
+pkgconfigdir=$libdir/pkgconfig
+
 ## defaults ############################################################
 
 # How to configure the package, one of `autoconf', `cmake', and
@@ -244,6 +247,8 @@ cmake_opts+=(-DCMAKE_INSTALL_PREFIX=$pkginstalldir)
 [ ${#cflags[@]}   -eq 0 ] || configure_env+=("CFLAGS=${cflags[*]}")
 [ ${#cxxflags[@]} -eq 0 ] || configure_env+=("CXXFLAGS=${cxxflags[*]}")
 [ ${#ldflags[@]}  -eq 0 ] || configure_env+=("LDFLAGS=${ldflags[*]}")
+
+configure_env+=(PKG_CONFIG_PATH=$pkgconfigdir)
 
 mkdir -p $srcdir
 mkdir -p $builddir
