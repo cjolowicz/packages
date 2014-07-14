@@ -24,100 +24,6 @@ options:
     -h, --help           Display this message."
 }
 
-### command line #######################################################
-
-_error() {
-    echo "$_prog: $*" >&2
-    exit 1
-}
-
-_bad_option() {
-    echo "$_prog: unrecognized option \`$1'" >&2
-    echo "Try \`$_prog --help' for more information." >&2
-    exit 1
-}
-
-_missing_arg() {
-    echo "$_prog: $1 expected" >&2
-    echo "Try \`$_prog --help' for more information." >&2
-    exit 1
-}
-
-_commands=()
-
-while [ $# -gt 0 ]
-do
-    _option="$1"
-    shift
-
-    case $_option in
-        -d | --deps)
-            _commands+=(deps)
-            ;;
-
-        -s | --source)
-            _commands+=(source)
-            ;;
-
-        -c | --configure)
-            _commands+=(configure)
-            ;;
-
-        -b | --build)
-            _commands+=(build)
-            ;;
-
-        -t | --stage)
-            _commands+=(stage)
-            ;;
-
-        -i | --install)
-            _commands+=(install)
-            ;;
-
-        -C | --unconfigure)
-            _commands+=(unconfigure)
-            ;;
-
-        -T | --unstage)
-            _commands+=(unstage)
-            ;;
-
-        -I | --uninstall)
-            _commands+=(uninstall)
-            ;;
-
-        --show)
-            _commands+=(show)
-            ;;
-
-	-h | --help)
-	    _usage
-	    exit
-	    ;;
-
-	--)
-	    break
-	    ;;
-
-	-*)
-	    _bad_option $_option
-	    ;;
-
-	*)
-	    set -- "$_option" "$@"
-	    break
-	    ;;
-    esac
-done
-
-[ $# -gt 0 ] || _missing_arg package
-
-_package="$1"
-shift
-
-[ ${#_commands[@]} -gt 0 ] || _commands=(show)
-
 ## constants ###########################################################
 
 # The name of the package.
@@ -220,6 +126,100 @@ install_vars=()
 define_patch() {
     patches+=("$(cat)")
 }
+
+### command line #######################################################
+
+_error() {
+    echo "$_prog: $*" >&2
+    exit 1
+}
+
+_bad_option() {
+    echo "$_prog: unrecognized option \`$1'" >&2
+    echo "Try \`$_prog --help' for more information." >&2
+    exit 1
+}
+
+_missing_arg() {
+    echo "$_prog: $1 expected" >&2
+    echo "Try \`$_prog --help' for more information." >&2
+    exit 1
+}
+
+_commands=()
+
+while [ $# -gt 0 ]
+do
+    _option="$1"
+    shift
+
+    case $_option in
+        -d | --deps)
+            _commands+=(deps)
+            ;;
+
+        -s | --source)
+            _commands+=(source)
+            ;;
+
+        -c | --configure)
+            _commands+=(configure)
+            ;;
+
+        -b | --build)
+            _commands+=(build)
+            ;;
+
+        -t | --stage)
+            _commands+=(stage)
+            ;;
+
+        -i | --install)
+            _commands+=(install)
+            ;;
+
+        -C | --unconfigure)
+            _commands+=(unconfigure)
+            ;;
+
+        -T | --unstage)
+            _commands+=(unstage)
+            ;;
+
+        -I | --uninstall)
+            _commands+=(uninstall)
+            ;;
+
+        --show)
+            _commands+=(show)
+            ;;
+
+	-h | --help)
+	    _usage
+	    exit
+	    ;;
+
+	--)
+	    break
+	    ;;
+
+	-*)
+	    _bad_option $_option
+	    ;;
+
+	*)
+	    set -- "$_option" "$@"
+	    break
+	    ;;
+    esac
+done
+
+[ $# -gt 0 ] || _missing_arg package
+
+_package="$1"
+shift
+
+[ ${#_commands[@]} -gt 0 ] || _commands=(show)
 
 ### package ############################################################
 
@@ -450,6 +450,8 @@ _command_uninstall() {
 _command_show() {
     cat $_packagefile
 }
+
+## main ################################################################
 
 for command in "${_commands[@]}" ; do
     _command_$command
