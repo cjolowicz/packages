@@ -365,7 +365,7 @@ _configure_autoconf() {
 
 _command_deps() {
     for dependency in "${dependencies[@]}" ; do
-        $packagedir/$dependency install
+        $0 --install $dependency
     done
 }
 
