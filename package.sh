@@ -7,22 +7,21 @@ _prog=$(basename $0)
 ### usage ##############################################################
 
 _usage() {
-    echo "usage: $_prog [options] [package] [commands]
+    echo "usage: $_prog [options] [package]
 Install source archives from upstream into the home directory.
 
-commands:
-    deps           Install the dependencies.
-    source         Retrieve the source tree.
-    configure      Configure the package.
-    build          Build the package.
-    stage          Install the package into a staging area.
-    install        Install the package.
-    unconfigure    Remove the build tree.
-    unstage        Remove the staging area.
-    uninstall      Uninstall the package.
-
 options:
-    -h, --help    Display this message."
+    -d, --deps           Install the dependencies.
+    -s, --source         Retrieve the source tree.
+    -c, --configure      Configure the package.
+    -b, --build          Build the package.
+    -t, --stage          Install the package into a staging area.
+    -i, --install        Install the package.
+    -C, --unconfigure    Remove the build tree.
+    -T, --unstage        Remove the staging area.
+    -I, --uninstall      Uninstall the package.
+        --show           Display the package definition.
+    -h, --help           Display this message."
 }
 
 ### command line #######################################################
@@ -44,27 +43,7 @@ _missing_arg() {
     exit 1
 }
 
-_is_valid_command() {
-    local available=(
-        deps
-        source
-        configure
-        build
-        stage
-        install
-        unconfigure
-        unstage
-        uninstall)
-
-    local command=
-    for command in ${available[@]} ; do
-        if [ "$1" = $command ] ; then
-            return
-        fi
-    done
-
-    return 1
-}
+_commands=()
 
 while [ $# -gt 0 ]
 do
@@ -72,6 +51,46 @@ do
     shift
 
     case $_option in
+        -d | --deps)
+            _commands+=(deps)
+            ;;
+
+        -s | --source)
+            _commands+=(source)
+            ;;
+
+        -c | --configure)
+            _commands+=(configure)
+            ;;
+
+        -b | --build)
+            _commands+=(build)
+            ;;
+
+        -t | --stage)
+            _commands+=(stage)
+            ;;
+
+        -i | --install)
+            _commands+=(install)
+            ;;
+
+        -C | --unconfigure)
+            _commands+=(unconfigure)
+            ;;
+
+        -T | --unstage)
+            _commands+=(unstage)
+            ;;
+
+        -I | --uninstall)
+            _commands+=(uninstall)
+            ;;
+
+        --show)
+            _commands+=(show)
+            ;;
+
 	-h | --help)
 	    _usage
 	    exit
@@ -97,14 +116,7 @@ done
 _package="$1"
 shift
 
-[ $# -gt 0 ] || _missing_arg command
-
-_commands=()
-while [ $# -gt 0 ] ; do
-    _is_valid_command "$1" || _error "invalid command '$1'"
-    _commands+=("$1")
-    shift
-done
+[ ${#_commands[@]} -gt 0 ] || _commands=(show)
 
 ## constants ###########################################################
 
@@ -433,6 +445,10 @@ _command_uninstall() {
     cd $installdir
 
     stow -D $package-$version
+}
+
+_command_show() {
+    cat $_packagefile
 }
 
 for command in "${_commands[@]}" ; do
