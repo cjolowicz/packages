@@ -17,6 +17,7 @@ options:
     -b, --build          Build the package.
     -t, --stage          Install the package into a staging area.
     -i, --install        Install the package.
+    -S, --unsource       Remove the source tree.
     -C, --unconfigure    Remove the build tree.
     -T, --unstage        Remove the staging area.
     -I, --uninstall      Uninstall the package.
@@ -176,6 +177,10 @@ do
 
         -i | --install)
             _commands+=(install)
+            ;;
+
+        -S | --unsource)
+            _commands+=(unsource)
             ;;
 
         -C | --unconfigure)
@@ -427,6 +432,14 @@ _command_install() {
     cd $installdir
 
     stow $package-$version
+}
+
+_command_unsource() {
+    if [ -d $pkgbuilddir ] ; then
+        _command_unconfigure
+
+        rm -rf $pkgsrcdir
+    fi
 }
 
 _command_unconfigure() {
