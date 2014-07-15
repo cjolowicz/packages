@@ -314,7 +314,7 @@ _list_archive() {
 
 _get_archive_dir() {
     for file ; do
-        _list_archive "$file" | head -n1 | cut -d/ -f1
+        _list_archive "$file" 2>/dev/null | head -n1 | cut -d/ -f1
     done
 }
 
