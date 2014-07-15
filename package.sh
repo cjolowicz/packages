@@ -324,7 +324,7 @@ _get_source() {
 
     cd $srcdir
 
-    wget "${wget_opts[@]}" $url
+    wget "${wget_opts[@]}" -O $file $url
 
     _extract_archive $file
 
