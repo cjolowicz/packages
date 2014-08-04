@@ -1,0 +1,25 @@
+baseurl=http://downloads.ghostscript.com/public
+build_in_srcdir=true
+
+define_patch <<<'
+--- a/configure   2014-03-26 13:53:47.000000000 +0100
++++ b/configure   2014-07-15 13:48:18.718636950 +0200
+@@ -6737,11 +6737,15 @@
+ if test $SHARE_LIBTIFF -eq 0; then
+       echo
+       echo "Running libtiff configure script..."
+-      olddir=`pwd`
+       if ! test -d $LIBTIFFCONFDIR ; then
+         mkdir $LIBTIFFCONFDIR
+       fi
+-      cd "$LIBTIFFCONFDIR" && $olddir/$LIBTIFFDIR/configure --disable-jbig --disable-lzma $SUBCONFIG_OPTS
++      olddir=`pwd`
++      case "$LIBTIFFDIR" in
++         /*) libtiffdir=$LIBTIFFDIR;;
++         *) libtiffdir=$olddir/$LIBTIFFDIR;;
++      esac
++      cd "$LIBTIFFCONFDIR" && $libtiffdir/configure --disable-jbig --disable-lzma $SUBCONFIG_OPTS
+       status=$?
+       if test "$status" -ne 0 ; then
+         as_fn_error $status "libtiff configure script failed" "$LINENO" 5
+'
