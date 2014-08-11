@@ -181,7 +181,7 @@ _missing_arg() {
 }
 
 _commands=()
-_show_variables=()
+_variables_to_show=()
 
 while [ $# -gt 0 ]
 do
@@ -234,18 +234,18 @@ do
             _commands+=(uninstall)
             ;;
 
-        --show)
-            _commands+=(show)
-            ;;
-
         --show-vars)
-            _show_variables+=("${variables[@]}")
+            _variables_to_show+=("${_variables[@]}")
             ;;
 
         --show-var)
             [ $# -gt 0 ] || missing_arg "$option"
-            _show_variables+=("$1")
+            _variables_to_show+=("$1")
             shift
+            ;;
+
+        --show)
+            _commands+=(show)
             ;;
 
         -h | --help)
@@ -273,7 +273,8 @@ done
 _package="$1"
 shift
 
-[ ${#_commands[@]} -gt 0 ] || _commands=(show)
+[ ${#_commands[@]} -gt 0 -o ${#_variables_to_show[@]} -gt 0 ] ||
+    _commands=(show)
 
 ### package ############################################################
 
@@ -421,10 +422,10 @@ _configure_autoconf() {
 }
 
 _show_variables() {
-    for variable in ${show_variables[@]} ; do
-        is_valid_variable "$variable" || _error "invalid variable '$variable'"
+    for variable in ${_variables_to_show[@]} ; do
+        _is_valid_variable "$variable" || _error "invalid variable '$variable'"
 
-        value=$(eval "echo \"$variable\"")
+        value=$(eval "echo \"\$$variable\"")
 
         echo "$variable=$value"
     done
@@ -493,7 +494,10 @@ _command_install() {
 
     rm -f $_installdir/share/info/dir
 
-    stow --dir $_progstowdir --target $_installdir $package-$version
+    local stowdir="$(realpath $_progstowdir)"
+    local targetdir="$(realpath $_installdir)"
+
+    stow --dir "$stowdir" --target "$targetdir" $package-$version
 }
 
 _command_unsource() {
@@ -528,7 +532,7 @@ _command_show() {
 
 ## main ################################################################
 
-show_variables
+_show_variables
 
 for command in "${_commands[@]}" ; do
     _command_$command

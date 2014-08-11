@@ -1,3 +1,5 @@
+# FIXME: ./obj/jcarith.c:872:18: error: ‘JERR_NO_ARITH_TABLE’ undeclared
+
 baseurl=http://downloads.ghostscript.com/public
 build_in_srcdir=true
 
