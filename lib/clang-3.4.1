@@ -7,8 +7,8 @@ cmake_opts+=(
     -DCMAKE_PREFIX_PATH=$prefix
     -DCMAKE_INSTALL_PREFIX=$pkginstalldir
     -DCMAKE_BUILD_TYPE=Debug
-    -DCLANG_PATH_TO_LLVM_BUILD=$builddir/llvm-$version
-    -DCLANG_PATH_TO_LLVM_SOURCE=$srcdir/llvm-$version)
+    -DCLANG_PATH_TO_LLVM_BUILD=$(riverside --show-var pkgbuilddir llvm-$version)
+    -DCLANG_PATH_TO_LLVM_SOURCE=$(riverside --show-var pkgsrcdir llvm-$version)
 
 define_patch <<EOF
 --- a/tools/extra/CMakeLists.txt (original)

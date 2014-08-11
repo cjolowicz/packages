@@ -2,7 +2,7 @@
 
 set -e
 
-_prog=$(basename $0)
+_prog=riverside
 
 ### usage ##############################################################
 
@@ -21,32 +21,59 @@ options:
     -C, --unconfigure    Remove the build tree.
     -T, --unstage        Remove the staging area.
     -I, --uninstall      Uninstall the package.
+        --install-self   Install this program.
         --show           Display the package definition.
+        --show-var VAR   Display a variable.
+        --show-vars      Display all variables.
     -h, --help           Display this message."
 }
 
+## internal ############################################################
+
+# The installation prefix for this program.
+_prefix=$HOME/local
+
+# The installation prefix for packages.
+_installdir=$HOME/local
+
+# The directory in which package definitions are kept.
+_proglibdir=$_prefix/lib/$_prog
+
+# The data directory for this program.
+_progdatadir=$_prefix/var/$_prog
+
+# The directory in which source trees are located.
+_progsrcdir=$_progdatadir/src
+
+# The directory in which build trees are located.
+_progbuilddir=$_progdatadir/build
+
+# The directory into which packages are staged.
+_progstowdir=$_progdatadir/stow
+
+# The externally visible variables.
+_variables=(
+    includedir
+    libdir
+    package
+    pkgbuilddir
+    pkgsrcdir
+    pkgstowdir
+    version)
+
 ## constants ###########################################################
+
+# The directory into which header files are installed.
+includedir=$_installdir/include
+
+# The directory into which libraries are installed.
+libdir=$_installdir/lib
 
 # The name of the package.
 package=
 
 # The version of the package.
 version=
-
-# The directory where packages are installed.
-prefix=$HOME/local
-
-# The directory in which package definitions are kept.
-packagedir=$HOME/sources/packages/lib
-
-# The directory in which source trees are located.
-srcdir=$HOME/sources/thirdparty
-
-# The directory in which build trees are located.
-builddir=$HOME/build/thirdparty
-
-# The directory into which packages are staged.
-installdir=$prefix/stow
 
 # The directory in which the source tree of a package is located.
 pkgsrcdir=
@@ -55,22 +82,7 @@ pkgsrcdir=
 pkgbuilddir=
 
 # The directory in which the package is staged.
-pkginstalldir=
-
-# The directory into which configuration files are installed.
-confdir=$prefix/etc
-
-# The directory into which libraries are installed.
-libdir=$prefix/lib
-
-# The directory into which header files are installed.
-includedir=$prefix/include
-
-# The directory into which info documentation is installed.
-infodir=$prefix/share/info
-
-# The directory in which pkg-config files are located.
-pkgconfigdir=$libdir/pkgconfig
+pkgstowdir=
 
 ## defaults ############################################################
 
@@ -128,6 +140,27 @@ define_patch() {
     patches+=("$(cat)")
 }
 
+### installation #######################################################
+
+install_self() {
+    local self=$0
+    local selflibdir=$(dirname $0)/lib
+
+    [ -d $_prefix       ] || install --mode 755 --directory $_prefix
+    [ -d $_prefix/bin   ] || install --mode 755 --directory $_prefix/bin
+    [ -d $_proglibdir   ] || install --mode 755 --directory $_proglibdir
+    [ -d $_progdatadir  ] || install --mode 755 --directory $_progdatadir
+    [ -d $_progsrcdir   ] || install --mode 755 --directory $_progsrcdir
+    [ -d $_progbuilddir ] || install --mode 755 --directory $_progbuilddir
+    [ -d $_progstowdir  ] || install --mode 755 --directory $_progstowdir
+
+    install --mode 0755 $self $_prefix/bin/$_prog
+
+    find $selflibdir -type f -print0 |
+    xargs --null --no-run-if-empty \
+        install --mode 0644 --target-directory $_proglibdir $file
+}
+
 ### command line #######################################################
 
 _error() {
@@ -148,6 +181,7 @@ _missing_arg() {
 }
 
 _commands=()
+_show_variables=()
 
 while [ $# -gt 0 ]
 do
@@ -179,6 +213,11 @@ do
             _commands+=(install)
             ;;
 
+        --install-self)
+            install_self
+            exit
+            ;;
+
         -S | --unsource)
             _commands+=(unsource)
             ;;
@@ -199,23 +238,33 @@ do
             _commands+=(show)
             ;;
 
-	-h | --help)
-	    _usage
-	    exit
-	    ;;
+        --show-vars)
+            _show_variables+=("${variables[@]}")
+            ;;
 
-	--)
-	    break
-	    ;;
+        --show-var)
+            [ $# -gt 0 ] || missing_arg "$option"
+            _show_variables+=("$1")
+            shift
+            ;;
 
-	-*)
-	    _bad_option $_option
-	    ;;
+        -h | --help)
+            _usage
+            exit
+            ;;
 
-	*)
-	    set -- "$_option" "$@"
-	    break
-	    ;;
+        --)
+            break
+            ;;
+
+        -*)
+            _bad_option $_option
+            ;;
+
+        *)
+            set -- "$_option" "$@"
+            break
+            ;;
     esac
 done
 
@@ -229,7 +278,7 @@ shift
 ### package ############################################################
 
 _packagefile=$(
-    find $packagedir -type f -name "$_package-*" |
+    find $_proglibdir -type f -name "$_package-*" |
     sort -r | head -n1)
 
 [ -f "$_packagefile" ] || _error "package '$_package' not found"
@@ -239,9 +288,9 @@ _pkgver=$(basename $_packagefile)
 package=${_pkgver%%-*}
 version=${_pkgver#*-}
 
-pkgsrcdir=$srcdir/$package-$version
-pkgbuilddir=$builddir/$package-$version
-pkginstalldir=$installdir/$package-$version
+pkgsrcdir=$_progsrcdir/$package-$version
+pkgbuilddir=$_progbuilddir/$package-$version
+pkgstowdir=$_progstowdir/$package-$version
 
 . $_packagefile
 
@@ -257,21 +306,15 @@ fi
 
 cppflags+=(-I$includedir)
 ldflags+=(-L$libdir -Wl,-rpath=$libdir)
-configure_opts+=(--prefix $pkginstalldir)
-cmake_opts+=(-DCMAKE_INSTALL_PREFIX=$pkginstalldir)
+configure_opts+=(--prefix $pkgstowdir)
+cmake_opts+=(-DCMAKE_INSTALL_PREFIX=$pkgstowdir)
 
 [ ${#cppflags[@]} -eq 0 ] || configure_env+=("CPPFLAGS=${cppflags[*]}")
 [ ${#cflags[@]}   -eq 0 ] || configure_env+=("CFLAGS=${cflags[*]}")
 [ ${#cxxflags[@]} -eq 0 ] || configure_env+=("CXXFLAGS=${cxxflags[*]}")
 [ ${#ldflags[@]}  -eq 0 ] || configure_env+=("LDFLAGS=${ldflags[*]}")
 
-configure_env+=(PKG_CONFIG_PATH=$pkgconfigdir)
-
-mkdir -p $srcdir
-mkdir -p $builddir
-mkdir -p $installdir
-mkdir -p $includedir
-mkdir -p $libdir
+configure_env+=(PKG_CONFIG_PATH=$libdir/pkgconfig)
 
 ## functions ###########################################################
 
@@ -288,6 +331,17 @@ _is_valid_configure_type() {
     local type=
     for type in ${available[@]} ; do
         if [ "$1" = $type ] ; then
+            return
+        fi
+    done
+
+    return 1
+}
+
+_is_valid_variable() {
+    local variable=
+    for variable in ${_variables[@]} ; do
+        if [ "$1" = $variable ] ; then
             return
         fi
     done
@@ -327,7 +381,7 @@ _get_source() {
     local url="$1" target="$2"
     local file=$(basename $url)
 
-    cd $srcdir
+    cd $_progsrcdir
 
     wget "${wget_opts[@]}" -O $file $url
 
@@ -364,6 +418,16 @@ _configure_autoconf() {
     cd $pkgbuilddir
 
     $pkgsrcdir/configure "${configure_opts[@]}" "${configure_env[@]}"
+}
+
+_show_variables() {
+    for variable in ${show_variables[@]} ; do
+        is_valid_variable "$variable" || _error "invalid variable '$variable'"
+
+        value=$(eval "echo \"$variable\"")
+
+        echo "$variable=$value"
+    done
 }
 
 ## commands ############################################################
@@ -412,11 +476,11 @@ _command_build() {
 _command_stage() {
     [ -f $pkgbuilddir/Makefile ] || _command_build
 
-    mkdir -p $installdir
+    mkdir -p $_progstowdir
 
     local dir=
     for dir in ${install_dirs[@]} ; do
-        mkdir -p $pkginstalldir/$dir
+        mkdir -p $pkgstowdir/$dir
     done
 
     cd $pkgbuilddir
@@ -425,13 +489,11 @@ _command_stage() {
 }
 
 _command_install() {
-    [ -d $pkginstalldir ] || _command_stage
+    [ -d $pkgstowdir ] || _command_stage
 
-    rm -f $infodir/dir
+    rm -f $_installdir/share/info/dir
 
-    cd $installdir
-
-    stow $package-$version
+    stow --dir $_progstowdir --target $_installdir $package-$version
 }
 
 _command_unsource() {
@@ -447,15 +509,15 @@ _command_unconfigure() {
 }
 
 _command_unstage() {
-    if [ -d $pkginstalldir ] ; then
+    if [ -d $pkgstowdir ] ; then
         _command_uninstall
 
-        rm -rf $pkginstalldir
+        rm -rf $pkgstowdir
     fi
 }
 
 _command_uninstall() {
-    cd $installdir
+    cd $_progstowdir
 
     stow -D $package-$version
 }
@@ -465,6 +527,8 @@ _command_show() {
 }
 
 ## main ################################################################
+
+show_variables
 
 for command in "${_commands[@]}" ; do
     _command_$command
