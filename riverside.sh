@@ -30,26 +30,23 @@ options:
 
 ## internal ############################################################
 
-# The installation prefix for this program.
-_prefix=$HOME/local
-
-# The installation prefix for packages.
-_installdir=$HOME/local
+# The directory containing all data for this program.
+_datadir=$HOME/build/$_prog
 
 # The directory in which package definitions are kept.
-_proglibdir=$_prefix/lib/$_prog
+_packagesdir=$_datadir/packages
 
-# The data directory for this program.
-_progdatadir=$_prefix/var/$_prog
+# The directory into which sources are downloaded.
+_srcdir=$_datadir/src
 
-# The directory in which source trees are located.
-_progsrcdir=$_progdatadir/src
-
-# The directory in which build trees are located.
-_progbuilddir=$_progdatadir/build
+# The directory in which the packages are built.
+_builddir=$_datadir/build
 
 # The directory into which packages are staged.
-_progstowdir=$_progdatadir/stow
+_stowdir=$_datadir/stow
+
+# The installation prefix for packages.
+_installdir=$_datadir/install
 
 # The externally visible variables.
 _variables=(
@@ -63,11 +60,14 @@ _variables=(
 
 ## constants ###########################################################
 
-# The directory into which header files are installed.
-includedir=$_installdir/include
+# The directory into which programs are installed.
+bindir=$_installdir/bin
 
 # The directory into which libraries are installed.
 libdir=$_installdir/lib
+
+# The directory into which header files are installed.
+includedir=$_installdir/include
 
 # The name of the package.
 package=
@@ -145,20 +145,18 @@ define_patch() {
 install_self() {
     local self=$0
     local selflibdir=$(dirname $0)/lib
+    local dir=
 
-    [ -d $_prefix       ] || install --mode 755 --directory $_prefix
-    [ -d $_prefix/bin   ] || install --mode 755 --directory $_prefix/bin
-    [ -d $_proglibdir   ] || install --mode 755 --directory $_proglibdir
-    [ -d $_progdatadir  ] || install --mode 755 --directory $_progdatadir
-    [ -d $_progsrcdir   ] || install --mode 755 --directory $_progsrcdir
-    [ -d $_progbuilddir ] || install --mode 755 --directory $_progbuilddir
-    [ -d $_progstowdir  ] || install --mode 755 --directory $_progstowdir
+    for dir in $_datadir $_packagesdir $_srcdir $_builddir $_stowdir \
+               $bindir $libdir $includedir ; do
+        [ -d $dir ] || install --mode 755 --directory $dir
+    done
 
-    install --mode 0755 $self $_prefix/bin/$_prog
+    install --mode 0755 $self $bindir/$_prog
 
     find $selflibdir -type f -print0 |
     xargs --null --no-run-if-empty \
-        install --mode 0644 --target-directory $_proglibdir $file
+        install --mode 0644 --target-directory $_packagesdir $file
 }
 
 ### command line #######################################################
@@ -281,7 +279,7 @@ _packagefile="$_arg"
 ### package ############################################################
 
 [ -f "$_packagefile" ] || _packagefile=$(
-    find $_proglibdir -type f -name "$_packagefile-*" |
+    find $_packagesdir -type f -name "$_packagefile-*" |
     sort -r | head -n1)
 
 [ -f "$_packagefile" ] || _error "package '$_arg' not found"
@@ -291,9 +289,9 @@ _pkgver=$(basename $_packagefile)
 package=${_pkgver%%-*}
 version=${_pkgver#*-}
 
-pkgsrcdir=$_progsrcdir/$package-$version
-pkgbuilddir=$_progbuilddir/$package-$version
-pkgstowdir=$_progstowdir/$package-$version
+pkgsrcdir=$_srcdir/$package-$version
+pkgbuilddir=$_builddir/$package-$version
+pkgstowdir=$_stowdir/$package-$version
 
 . $_packagefile
 
@@ -384,7 +382,7 @@ _get_source() {
     local url="$1" target="$2"
     local file=$(basename $url)
 
-    cd $_progsrcdir
+    cd $_srcdir
 
     wget "${wget_opts[@]}" -O $file $url
 
@@ -479,7 +477,7 @@ _command_build() {
 _command_stage() {
     [ -f $pkgbuilddir/Makefile ] || _command_build
 
-    mkdir -p $_progstowdir
+    mkdir -p $_stowdir
 
     local dir=
     for dir in ${install_dirs[@]} ; do
@@ -496,7 +494,7 @@ _command_install() {
 
     rm -f $_installdir/share/info/dir
 
-    local stowdir="$(realpath $_progstowdir)"
+    local stowdir="$(realpath $_stowdir)"
     local targetdir="$(realpath $_installdir)"
 
     stow --dir "$stowdir" --target "$targetdir" $package-$version
@@ -527,7 +525,7 @@ _command_unstage() {
 }
 
 _command_uninstall() {
-    cd $_progstowdir
+    cd $_stowdir
 
     stow -D $package-$version
 }
