@@ -50,6 +50,7 @@ _prefix=$_datadir/usr
 
 # The externally visible variables.
 _variables=(
+    bindir
     includedir
     libdir
     package
