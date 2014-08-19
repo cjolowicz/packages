@@ -270,19 +270,21 @@ done
 
 [ $# -gt 0 ] || _missing_arg package
 
-_package="$1"
+_arg="$1"
 shift
+
+_packagefile="$_arg"
 
 [ ${#_commands[@]} -gt 0 -o ${#_variables_to_show[@]} -gt 0 ] ||
     _commands=(show)
 
 ### package ############################################################
 
-_packagefile=$(
-    find $_proglibdir -type f -name "$_package-*" |
+[ -f "$_packagefile" ] || _packagefile=$(
+    find $_proglibdir -type f -name "$_packagefile-*" |
     sort -r | head -n1)
 
-[ -f "$_packagefile" ] || _error "package '$_package' not found"
+[ -f "$_packagefile" ] || _error "package '$_arg' not found"
 
 _pkgver=$(basename $_packagefile)
 
@@ -503,6 +505,10 @@ _command_install() {
 _command_unsource() {
     if [ -d $pkgbuilddir ] ; then
         _command_unconfigure
+
+	if [ -L $pkgsrcdir ] ; then
+            rm -rf "$(readlink $pkgsrcdir)"
+        fi
 
         rm -rf $pkgsrcdir
     fi
