@@ -31,7 +31,7 @@ options:
 ## internal ############################################################
 
 # The directory containing all data for this program.
-_datadir=$HOME/build/$_prog
+_datadir=$HOME/.$_prog
 
 # The directory in which package definitions are kept.
 _packagesdir=$_datadir/packages
@@ -46,7 +46,7 @@ _builddir=$_datadir/build
 _stowdir=$_datadir/stow
 
 # The installation prefix for packages.
-_installdir=$_datadir/install
+_prefix=$_datadir/usr
 
 # The externally visible variables.
 _variables=(
@@ -61,13 +61,13 @@ _variables=(
 ## constants ###########################################################
 
 # The directory into which programs are installed.
-bindir=$_installdir/bin
+bindir=$_prefix/bin
 
 # The directory into which libraries are installed.
-libdir=$_installdir/lib
+libdir=$_prefix/lib
 
 # The directory into which header files are installed.
-includedir=$_installdir/include
+includedir=$_prefix/include
 
 # The name of the package.
 package=
@@ -492,10 +492,10 @@ _command_stage() {
 _command_install() {
     [ -d $pkgstowdir ] || _command_stage
 
-    rm -f $_installdir/share/info/dir
+    rm -f $_prefix/share/info/dir
 
     local stowdir="$(realpath $_stowdir)"
-    local targetdir="$(realpath $_installdir)"
+    local targetdir="$(realpath $_prefix)"
 
     stow --dir "$stowdir" --target "$targetdir" $package-$version
 }
