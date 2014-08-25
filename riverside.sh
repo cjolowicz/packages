@@ -179,6 +179,12 @@ _missing_arg() {
     exit 1
 }
 
+_unknown_arg() {
+    echo "$_prog: unknown argument \`$1'" >&2
+    echo "Try \`$_prog --help' for more information." >&2
+    exit 1
+}
+
 _commands=()
 _variables_to_show=()
 
@@ -274,10 +280,16 @@ shift
 
 _packagefile="$_arg"
 
+[ $# -gt 0 ] || _unknown_arg "$1"
+
 [ ${#_commands[@]} -gt 0 -o ${#_variables_to_show[@]} -gt 0 ] ||
     _commands=(show)
 
 ### package ############################################################
+
+if [ -f $_packagesdir/"$_packagefile" ] ; then
+    _packagefile=$_packagesdir/"$_packagefile"
+fi
 
 [ -f "$_packagefile" ] || _packagefile=$(
     find $_packagesdir -type f -name "$_packagefile-*" |
