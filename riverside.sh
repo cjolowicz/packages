@@ -280,7 +280,7 @@ shift
 
 _packagefile="$_arg"
 
-[ $# -gt 0 ] || _unknown_arg "$1"
+[ $# -eq 0 ] || _unknown_arg "$1"
 
 [ ${#_commands[@]} -gt 0 -o ${#_variables_to_show[@]} -gt 0 ] ||
     _commands=(show)
