@@ -22,6 +22,7 @@ options:
     -T, --unstage        Remove the staging area.
     -I, --uninstall      Uninstall the package.
         --install-self   Install this program.
+        --print-env      Generate Bourne shell commands on stdout.
         --show           Display the package definition.
         --show-var VAR   Display a variable.
         --show-vars      Display all variables.
@@ -53,6 +54,8 @@ _variables=(
     bindir
     includedir
     libdir
+    mandir
+    sharedmandir
     package
     pkgbuilddir
     pkgsrcdir
@@ -69,6 +72,12 @@ libdir=$_prefix/lib
 
 # The directory into which header files are installed.
 includedir=$_prefix/include
+
+# The directory into which manpages are installed.
+mandir=$_prefix/man
+
+# The directory into which shared manpages are installed.
+sharedmandir=$_prefix/share/man
 
 # The name of the package.
 package=
@@ -160,6 +169,34 @@ install_self() {
         install --mode 0644 --target-directory $_packagesdir $file
 }
 
+### environment ########################################################
+
+_print_env_commands='for dir in %s ; do
+    if [ -d $dir ] ; then
+	case $PATH in
+	    *:"$dir":*) ;;
+	    *) export PATH=$dir:"${PATH}" ;;
+	esac
+    fi
+done
+
+for dir in %s %s ; do
+    if [ -d $dir ] ; then
+        case $MANPATH in
+            *:"$dir":*) ;;
+            *) export MANPATH=$dir:"${MANPATH}" ;;
+        esac
+    fi
+done
+'
+
+print_env() {
+    printf "$_print_env_commands" \
+           "$bindir"              \
+           "$mandir"              \
+           "$sharedmandir"
+}
+
 ### command line #######################################################
 
 _error() {
@@ -220,6 +257,11 @@ do
 
         --install-self)
             install_self
+            exit
+            ;;
+
+        --print-env)
+            print_env
             exit
             ;;
 
