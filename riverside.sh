@@ -582,7 +582,10 @@ _command_unstage() {
 _command_uninstall() {
     cd $_stowdir
 
-    stow -D $package-$version
+    local stowdir="$(realpath $_stowdir)"
+    local targetdir="$(realpath $_prefix)"
+
+    stow --dir "$stowdir" --target "$targetdir" -D $package-$version
 }
 
 _command_show() {
