@@ -1,0 +1,13 @@
+IFS=. read -ra v <<< "$version"
+
+url=https://cmake.org/files/v${v[0]}.${v[1]}/$package-$version.tar.gz
+
+configure=noop
+
+configure_hook() {
+    if which sphinx-build >/dev/null 2>&1 ; then
+        ./bootstrap --prefix=$pkgstowdir --sphinx-{man,html}
+    else
+        ./bootstrap --prefix=$pkgstowdir
+    fi
+}
