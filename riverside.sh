@@ -46,9 +46,6 @@ _builddir=$_datadir/build
 # The directory into which packages are staged.
 _stowdir=$_datadir/stow
 
-# The installation prefix for packages.
-_prefix=$_datadir/usr
-
 # The externally visible variables.
 _variables=(
     bindir
@@ -60,24 +57,28 @@ _variables=(
     pkgbuilddir
     pkgsrcdir
     pkgstowdir
+    prefix
     version)
 
 ## constants ###########################################################
 
+# The installation prefix for packages.
+prefix=$_datadir/usr
+
 # The directory into which programs are installed.
-bindir=$_prefix/bin
+bindir=$prefix/bin
 
 # The directory into which libraries are installed.
-libdir=$_prefix/lib
+libdir=$prefix/lib
 
 # The directory into which header files are installed.
-includedir=$_prefix/include
+includedir=$prefix/include
 
 # The directory into which manpages are installed.
-mandir=$_prefix/man
+mandir=$prefix/man
 
 # The directory into which shared manpages are installed.
-sharedmandir=$_prefix/share/man
+sharedmandir=$prefix/share/man
 
 # The name of the package.
 package=
@@ -547,10 +548,10 @@ _command_stage() {
 _command_install() {
     [ -d $pkgstowdir ] || _command_stage
 
-    rm -f $_prefix/share/info/dir
+    rm -f $prefix/share/info/dir
 
     local stowdir="$(realpath $_stowdir)"
-    local targetdir="$(realpath $_prefix)"
+    local targetdir="$(realpath $prefix)"
 
     stow --dir "$stowdir" --target "$targetdir" $package-$version
 }
@@ -583,7 +584,7 @@ _command_uninstall() {
     cd $_stowdir
 
     local stowdir="$(realpath $_stowdir)"
-    local targetdir="$(realpath $_prefix)"
+    local targetdir="$(realpath $prefix)"
 
     stow --dir "$stowdir" --target "$targetdir" -D $package-$version
 }
