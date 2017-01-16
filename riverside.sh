@@ -21,6 +21,7 @@ options:
     -C, --unconfigure    Remove the build tree.
     -T, --unstage        Remove the staging area.
     -I, --uninstall      Uninstall the package.
+    -j, --jobs N         Allow N make jobs at once.
         --install-self   Install this program.
         --print-env      Generate Bourne shell commands on stdout.
         --show           Display the package definition.
@@ -130,6 +131,9 @@ configure_opts=()
 
 # Options for cmake.
 cmake_opts=()
+
+# Options for make.
+make_opts=()
 
 # Environment variables for configure and cmake.
 configure_env=()
@@ -280,6 +284,12 @@ do
 
         -I | --uninstall)
             _commands+=(uninstall)
+            ;;
+
+        -j | --jobs)
+            [ $# -gt 0 ] || missing_arg "$option"
+            make_opts+=(--jobs="$1")
+            shift
             ;;
 
         --show-vars)
@@ -462,7 +472,7 @@ _configure_cmake() {
 
     cd $pkgbuilddir
 
-    env "${configure_env[@]}" cmake $pkgsrcdir ${cmake_opts[@]}
+    env "${configure_env[@]}" cmake $pkgsrcdir "${cmake_opts[@]}"
 }
 
 _configure_autoconf() {
@@ -527,7 +537,7 @@ _command_build() {
 
     cd $pkgbuilddir
 
-    make
+    make "${make_opts[@]}"
 }
 
 _command_stage() {
