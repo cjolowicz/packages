@@ -1,0 +1,12 @@
+baseurl=ftp://ftp.fu-berlin.de/unix/languages/$package/releases/$package-$version
+dependencies+=(gmp-6.0.0 mpfr-3.1.2 mpc-1.0.2)
+configure_opts+=(
+    --with-stage1-ldflags="-L$libdir -Wl,-rpath=$libdir"
+    --with-boot-ldflags="-L$libdir -Wl,-rpath=$libdir"
+    --with-mpc="$prefix"
+    --with-mpfr="$prefix"
+    --with-gmp="$prefix"
+)
+env+=(
+    LD_LIBRARY_PATH="$libdir"
+    BOOT_LDFLAGS="-L$libdir -Wl,-rpath=$libdir")
