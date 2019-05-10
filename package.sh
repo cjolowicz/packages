@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+_prog=$(basename $0)
+
 ### usage ##############################################################
 
 _usage() {
@@ -21,108 +25,323 @@ options:
     -h, --help    Display this message."
 }
 
+### command line #######################################################
+
+_error() {
+    echo "$_prog: $*" >&2
+    exit 1
+}
+
+_bad_option() {
+    echo "$_prog: unrecognized option \`$1'" >&2
+    echo "Try \`$_prog --help' for more information." >&2
+    exit 1
+}
+
+_missing_arg() {
+    echo "$_prog: $1 expected" >&2
+    echo "Try \`$_prog --help' for more information." >&2
+    exit 1
+}
+
+_is_valid_command() {
+    local available=(
+        deps
+        source
+        configure
+        build
+        stage
+        install
+        unconfigure
+        unstage
+        uninstall)
+
+    local command=
+    for command in ${available[@]} ; do
+        if [ "$1" = $command ] ; then
+            return
+        fi
+    done
+
+    return 1
+}
+
+while [ $# -gt 0 ]
+do
+    _option="$1"
+    shift
+
+    case $_option in
+	-h | --help)
+	    _usage
+	    exit
+	    ;;
+
+	--)
+	    break
+	    ;;
+
+	-*)
+	    _bad_option $_option
+	    ;;
+
+	*)
+	    set -- "$_option" "$@"
+	    break
+	    ;;
+    esac
+done
+
+[ $# -gt 0 ] || _missing_arg package
+
+_package="$1"
+shift
+
+[ $# -gt 0 ] || _missing_arg command
+
+_commands=()
+while [ $# -gt 0 ] ; do
+    _is_valid_command "$1" || _error "invalid command '$1'"
+    _commands+=("$1")
+    shift
+done
+
 ## constants ###########################################################
 
-_define_constants() {
-    # The name of the package.
-    package=
+# The name of the package.
+package=
 
-    # The version of the package.
-    version=
+# The version of the package.
+version=
 
-    # The directory where packages are installed.
-    prefix=$HOME/local
+# The directory where packages are installed.
+prefix=$HOME/local
 
-    # The directory in which package definitions are kept.
-    packagedir=$HOME/sources/packages/lib
+# The directory in which package definitions are kept.
+packagedir=$HOME/sources/packages/lib
 
-    # The directory in which source trees are located.
-    srcdir=$HOME/sources/thirdparty
+# The directory in which source trees are located.
+srcdir=$HOME/sources/thirdparty
 
-    # The directory in which build trees are located.
-    builddir=$HOME/build/thirdparty
+# The directory in which build trees are located.
+builddir=$HOME/build/thirdparty
 
-    # The directory into which packages are staged.
-    installdir=$prefix/stow
+# The directory into which packages are staged.
+installdir=$prefix/stow
 
-    # The directory in which the source tree of a package is located.
-    pkgsrcdir=
+# The directory in which the source tree of a package is located.
+pkgsrcdir=
 
-    # The directory in which the build tree of a package is located.
-    pkgbuilddir=
+# The directory in which the build tree of a package is located.
+pkgbuilddir=
 
-    # The directory in which the package is staged.
-    pkginstalldir=
+# The directory in which the package is staged.
+pkginstalldir=
 
-    # The directory into which configuration files are installed.
-    confdir=$prefix/etc
+# The directory into which configuration files are installed.
+confdir=$prefix/etc
 
-    # The directory into which libraries are installed.
-    libdir=$prefix/lib
+# The directory into which libraries are installed.
+libdir=$prefix/lib
 
-    # The directory into which header files are installed.
-    includedir=$prefix/include
+# The directory into which header files are installed.
+includedir=$prefix/include
 
-    # The directory into which info documentation is installed.
-    infodir=$prefix/share/info
-}
+# The directory into which info documentation is installed.
+infodir=$prefix/share/info
 
 ## defaults ############################################################
 
-_define_package_defaults() {
-    # How to configure the package, one of `autoconf', `cmake', and
-    # `noop'. Define configure_hook() to perform additional actions.
-    configure=autoconf
+# How to configure the package, one of `autoconf', `cmake', and
+# `noop'. Define configure_hook() to perform additional actions.
+configure=autoconf
 
-    # Whether the package must be built inside the source tree.
-    build_in_srcdir=false
+# Whether the package must be built inside the source tree.
+build_in_srcdir=false
 
-    # Dependencies of the package, in the form `package-version'.
-    dependencies=()
+# Dependencies of the package, in the form `package-version'.
+dependencies=()
 
-    # Additional sources, in the form `path=url'. The path is relative to $pkgsrcdir.
-    extra_sources=()
+# Additional sources, in the form `path=url'. The path is relative to $pkgsrcdir.
+extra_sources=()
 
-    # Any patches to apply relative to $pkgsrcdir.
-    patches=()
+# Any patches to apply relative to $pkgsrcdir.
+patches=()
 
-    # Flags for the C compiler.
-    cflags=()
+# Flags for the C compiler.
+cflags=()
 
-    # Flags for the C preprocessor.
-    cppflags=()
+# Flags for the C preprocessor.
+cppflags=()
 
-    # Flags for the C++ compiler.
-    cxxflags=()
+# Flags for the C++ compiler.
+cxxflags=()
 
-    # Flags for the linker.
-    ldflags=()
+# Flags for the linker.
+ldflags=()
 
-    # Options for the configure script.
-    configure_opts=()
+# Options for the configure script.
+configure_opts=()
 
-    # Options for cmake.
-    cmake_opts=()
+# Options for cmake.
+cmake_opts=()
 
-    # Options for wget.
-    wget_opts=()
+# Options for wget.
+wget_opts=()
 
-    # Environment variables for make, cmake, and configure.
-    env=()
+# Environment variables for make, cmake, and configure.
+env=()
 
-    # Targets for make install.
-    install_targets=(install)
+# Targets for make install.
+install_targets=(install)
 
-    # Directories to create before make install.
-    install_dirs=()
+# Directories to create before make install.
+install_dirs=()
 
-    # Variables to pass to make install.
-    install_vars=()
-}
+# Variables to pass to make install.
+install_vars=()
 
 # Read a patch from stdin and append it to `patches'.
 define_patch() {
     patches+=("$(cat)")
+}
+
+### package ############################################################
+
+_packagefile=$(
+    find $packagedir -type f -name "$_package-*" |
+    sort -r | head -n1)
+
+[ -f "$_packagefile" ] || _error "package '$_package' not found"
+
+_pkgver=$(basename $_packagefile)
+
+package=${_pkgver%%-*}
+version=${_pkgver#*-}
+
+pkgsrcdir=$srcdir/$package-$version
+pkgbuilddir=$builddir/$package-$version
+pkginstalldir=$installdir/$package-$version
+
+. $_packagefile
+
+if [ -n "$url" ] ; then
+    : ${file:=$(basename $url)}
+else
+    : ${file:=$package-$version.tar.gz}
+    : ${url:=$baseurl/$file}
+fi
+
+[ "$file" = $(basename $url) ] ||
+    _error "url and file are in conflict"
+
+cppflags+=(-I$includedir)
+ldflags+=(-L$libdir -Wl,-rpath=$libdir)
+configure_opts+=(--prefix $pkginstalldir)
+cmake_opts+=(-DCMAKE_INSTALL_PREFIX=$pkginstalldir)
+
+[ ${#cppflags[@]} -eq 0 ] || env+=("CPPFLAGS=${cppflags[*]}")
+[ ${#cflags[@]}   -eq 0 ] || env+=("CFLAGS=${cflags[*]}")
+[ ${#cxxflags[@]} -eq 0 ] || env+=("CXXFLAGS=${cxxflags[*]}")
+[ ${#ldflags[@]}  -eq 0 ] || env+=("LDFLAGS=${ldflags[*]}")
+
+mkdir -p $srcdir
+mkdir -p $builddir
+mkdir -p $installdir
+mkdir -p $includedir
+mkdir -p $libdir
+
+## functions ###########################################################
+
+_is_function() {
+    [ $(type -t "$1" 2>/dev/null) = 'function' ] || return 1
+}
+
+_is_valid_configure_type() {
+    local available=(
+        autoconf
+        cmake
+        noop)
+
+    local type=
+    for type in ${available[@]} ; do
+        if [ "$1" = $type ] ; then
+            return
+        fi
+    done
+
+    return 1
+}
+
+_extract_archive() {
+    for file ; do
+        case $file in
+            *.tgz)     tar zxf "$file" ;;
+            *.tar.gz)  tar zxf "$file" ;;
+            *.tar.bz2) tar jxf "$file" ;;
+            *.tar.xz)  tar Jxf "$file" ;;
+        esac
+    done
+}
+
+_list_archive() {
+    for file ; do
+        case $file in
+            *.tgz)     tar ztf "$file" ;;
+            *.tar.gz)  tar ztf "$file" ;;
+            *.tar.bz2) tar jtf "$file" ;;
+            *.tar.xz)  tar Jtf "$file" ;;
+        esac
+    done
+}
+
+_get_archive_dir() {
+    for file ; do
+        _list_archive "$file" | head -n1 | cut -d/ -f1
+    done
+}
+
+_get_source() {
+    local url="$1" target="$2"
+    local file=$(basename $url)
+
+    cd $srcdir
+
+    wget "${wget_opts[@]}" $url
+
+    _extract_archive $file
+
+    dir=$(_get_archive_dir $file)
+
+    [ "$dir" = $target ] || ln -s "$dir" $target
+}
+
+_configure_noop() {
+    ln -sf $pkgsrcdir $pkgbuilddir
+}
+
+_configure_cmake() {
+    if $build_in_srcdir ; then
+        ln -sf $pkgsrcdir $pkgbuilddir
+    else
+        mkdir -p $pkgbuilddir
+    fi
+
+    cd $pkgbuilddir
+
+    env "${env[@]}" cmake $pkgsrcdir ${cmake_opts[@]}
+}
+
+_configure_autoconf() {
+    if $build_in_srcdir ; then
+        ln -sf $pkgsrcdir $pkgbuilddir
+    else
+        mkdir -p $pkgbuilddir
+    fi
+
+    cd $pkgbuilddir
+
+    $pkgsrcdir/configure "${configure_opts[@]}" "${env[@]}"
 }
 
 ## commands ############################################################
@@ -211,235 +430,6 @@ _command_uninstall() {
     stow -D $package-$version
 }
 
-## functions ###########################################################
-
-_error() {
-    echo "$_prog: $*" >&2
-    exit 1
-}
-
-_is_function() {
-    [ $(type -t "$1" 2>/dev/null) = 'function' ] || return 1
-}
-
-_is_valid_configure_type() {
-    local available=(
-        autoconf
-        cmake
-        noop)
-
-    local type=
-    for type in ${available[@]} ; do
-        if [ "$1" = $type ] ; then
-            return
-        fi
-    done
-
-    return 1
-}
-
-_is_valid_command() {
-    local available=(
-        deps
-        source
-        configure
-        build
-        stage
-        install
-        unconfigure
-        unstage
-        uninstall)
-
-    local command=
-    for command in ${available[@]} ; do
-        if [ "$1" = $command ] ; then
-            return
-        fi
-    done
-
-    return 1
-}
-
-_load_package() {
-    packagefile=$(
-        find $packagedir -type f -name "$package-*" |
-        sort -r | head -n1)
-
-    [ -f "$packagefile" ] || _error "$package not found"
-
-    _pkgver=$(basename $packagefile)
-
-    version=${_pkgver#*-}
-
-    pkgsrcdir=$srcdir/$package-$version
-    pkgbuilddir=$builddir/$package-$version
-    pkginstalldir=$installdir/$package-$version
-
-    . $packagefile
-}
-
-_finalize_package() {
-    if [ -n "$url" ] ; then
-        : ${file:=$(basename $url)}
-    else
-        : ${file:=$package-$version.tar.gz}
-        : ${url:=$baseurl/$file}
-    fi
-
-    [ "$file" = $(basename $url) ] ||
-        _error "url and file are in conflict"
-
-    cppflags+=(-I$includedir)
-    ldflags+=(-L$libdir -Wl,-rpath=$libdir)
-    configure_opts+=(--prefix $pkginstalldir)
-    cmake_opts+=(-DCMAKE_INSTALL_PREFIX=$pkginstalldir)
-
-    [ ${#cppflags[@]} -eq 0 ] || env+=("CPPFLAGS=${cppflags[*]}")
-    [ ${#cflags[@]}   -eq 0 ] || env+=("CFLAGS=${cflags[*]}")
-    [ ${#cxxflags[@]} -eq 0 ] || env+=("CXXFLAGS=${cxxflags[*]}")
-    [ ${#ldflags[@]}  -eq 0 ] || env+=("LDFLAGS=${ldflags[*]}")
-}
-
-_extract_archive() {
-    for file ; do
-        case $file in
-            *.tgz)     tar zxf "$file" ;;
-            *.tar.gz)  tar zxf "$file" ;;
-            *.tar.bz2) tar jxf "$file" ;;
-            *.tar.xz)  tar Jxf "$file" ;;
-        esac
-    done
-}
-
-_list_archive() {
-    for file ; do
-        case $file in
-            *.tgz)     tar ztf "$file" ;;
-            *.tar.gz)  tar ztf "$file" ;;
-            *.tar.bz2) tar jtf "$file" ;;
-            *.tar.xz)  tar Jtf "$file" ;;
-        esac
-    done
-}
-
-_get_archive_dir() {
-    for file ; do
-        _list_archive "$file" | head -n1 | cut -d/ -f1
-    done
-}
-
-_get_source() {
-    local url="$1" target="$2"
-    local file=$(basename $url)
-
-    cd $srcdir
-
-    wget "${wget_opts[@]}" $url
-
-    _extract_archive $file
-
-    dir=$(_get_archive_dir $file)
-
-    [ "$dir" = $target ] || ln -s "$dir" $target
-}
-
-_configure_noop() {
-    ln -sf $pkgsrcdir $pkgbuilddir
-}
-
-_configure_cmake() {
-    if $build_in_srcdir ; then
-        ln -sf $pkgsrcdir $pkgbuilddir
-    else
-        mkdir -p $pkgbuilddir
-    fi
-
-    cd $pkgbuilddir
-
-    env "${env[@]}" cmake $pkgsrcdir ${cmake_opts[@]}
-}
-
-_configure_autoconf() {
-    if $build_in_srcdir ; then
-        ln -sf $pkgsrcdir $pkgbuilddir
-    else
-        mkdir -p $pkgbuilddir
-    fi
-
-    cd $pkgbuilddir
-
-    $pkgsrcdir/configure "${configure_opts[@]}" "${env[@]}"
-}
-
-### command line #######################################################
-
-_bad_option() {
-    echo "$_prog: unrecognized option \`$1'" >&2
-    echo "Try \`$_prog --help' for more information." >&2
-    exit 1
-}
-
-_missing_arg() {
-    echo "$_prog: $1 expected" >&2
-    echo "Try \`$_prog --help' for more information." >&2
-    exit 1
-}
-
-_cmdline() {
-    while [ $# -gt 0 ]
-    do
-        local option="$1"
-        shift
-
-        case $option in
-            -h | --help)
-                _usage
-                exit
-                ;;
-
-            --)
-                break
-                ;;
-
-            -*)
-                _bad_option $option
-                ;;
-
-            *)
-                set -- "$option" "$@"
-                break
-                ;;
-        esac
-    done
-
-    [ $# -gt 0 ] || _missing_arg package
-
-    package="$1"
-    shift
-
-    [ $# -gt 0 ] || _missing_arg command
-
-    commands=()
-    while [ $# -gt 0 ] ; do
-	_is_valid_command "$1" || _error "invalid command '$1'"
-        commands+=("$1")
-	shift
-    done
-}
-
-## main ################################################################
-
-set -e
-
-_prog=$(basename $0)
-
-_cmdline "$@"
-
-_define_constants
-_define_package_defaults
-_load_package
-_finalize_package
-
-for command in "${commands[@]}" ; do
+for command in "${_commands[@]}" ; do
     _command_$command
 done
